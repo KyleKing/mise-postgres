@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jdx/mise-action@v2
+        with:
+          experimental: true
+      - name: Run linters
+        run: mise run lint
+
+  test:
+    name: Test
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jdx/mise-action@v2
+        with:
+          experimental: true
+      - name: Link plugin
+        run: mise plugin link --force postgres-binary "$PWD"
+      - name: List available versions
+        run: mise ls-remote postgres-binary:postgres | head -10
+      - name: Install PostgreSQL 15.15.0
+        run: mise install postgres-binary:postgres@15.15.0
+      - name: Verify installation
+        run: |
+          mise exec postgres-binary:postgres@15.15.0 -- postgres --version
+          mise exec postgres-binary:postgres@15.15.0 -- psql --version
+      - name: Check environment setup
+        run: |
+          eval "$(mise activate bash)"
+          mise use postgres-binary:postgres@15.15.0
+          echo "PGDATA=$PGDATA"
+          [ -d "$PGDATA" ] && echo "PGDATA directory exists" || exit 1
+          [ -f "$PGDATA/PG_VERSION" ] && echo "Database initialized" || exit 1

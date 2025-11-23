@@ -1,0 +1,41 @@
+# mise configuration for development tools and tasks
+
+[env]
+MISE_USE_VERSIONS_HOST = "0"
+
+[tools]
+actionlint = "latest"
+hk = "latest"
+lua = "5.4"
+pkl = "latest"
+stylua = "latest"
+
+[tasks.format]
+description = "Format Lua code with stylua"
+run = "stylua metadata.lua hooks/"
+
+[tasks.lint]
+description = "Run all linters (luacheck, stylua, actionlint)"
+run = "hk"
+
+[tasks.ci]
+description = "Run CI pipeline (lint + test)"
+depends = ["lint", "test"]
+
+[tasks.test]
+description = "Test the backend plugin (requires mise)"
+run = '''
+#!/usr/bin/env bash
+set -euo pipefail
+
+echo "Testing mise-postgres-binary backend plugin..."
+
+# Link plugin locally for testing
+mise plugin link --force postgres-binary "$PWD"
+
+# Test listing versions
+echo "Listing available versions..."
+mise ls-remote postgres-binary:postgres | head -5
+
+echo "Backend plugin tests passed!"
+'''

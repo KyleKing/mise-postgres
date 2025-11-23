@@ -1,0 +1,50 @@
+/// hk configuration for linting and pre-commit hooks
+/// https://github.com/jdx/hk
+@file:// import*
+import "pkl:hk@1.2.0"
+
+extends "pkl:hk@1.2.0#/Config.pkl"
+import "pkl:hk@1.2.0#/Builtins.pkl"
+
+/// Linters to run
+linters {
+    /// Lua static analyzer
+    new Builtins#Luacheck {
+        glob = "**/*.lua"
+        install = "luarocks install luacheck"
+    }
+
+    /// Lua code formatter
+    new Builtins#StyLua {
+        glob = "**/*.lua"
+    }
+
+    /// GitHub Actions workflow validator
+    new Builtins#Actionlint {
+        glob = ".github/workflows/*.{yml,yaml}"
+    }
+}
+
+/// Pre-commit hook to run all linters with auto-fix
+hooks {
+    new {
+        name = "pre-commit"
+        linters = linters
+        git_stash = true
+        fix = true
+    }
+
+    /// Fix hook - run all linters with fixing enabled
+    new {
+        name = "fix"
+        linters = linters
+        fix = true
+    }
+
+    /// Check hook - run all linters without modifying files
+    new {
+        name = "check"
+        linters = linters
+        fix = false
+    }
+}
