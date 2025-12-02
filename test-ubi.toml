@@ -1,0 +1,20 @@
+# Test configuration for UBI backend with theseus-rs/postgresql-binaries
+
+[tools]
+"ubi:theseus-rs/postgresql-binaries" = "15.10.0"
+
+[tool.ubi:theseus-rs/postgresql-binaries]
+# PostgreSQL binaries are in bin/ directory within the tarball
+exe = "bin/postgres"
+
+# Platform-specific matching
+# For macOS M1/M2:
+# matching = "aarch64-apple-darwin"
+# For macOS Intel:
+# matching = "x86_64-apple-darwin"
+# For Linux x86_64:
+# matching = "x86_64-unknown-linux-gnu"
+
+[env]
+# Would need to manually configure these
+# PGDATA = "{{config_root}}/postgres-data"
