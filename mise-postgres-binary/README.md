@@ -4,12 +4,12 @@ mise backend plugin for installing PostgreSQL from pre-built binaries.
 
 ## Features
 
-- 🚀 **Fast installations**: Pre-built binaries, no compilation required
-- 🎯 **Precise version control**: Install specific PostgreSQL versions (e.g., 15.10.0)
-- 🔒 **Secure**: SHA256 checksum verification for all downloads
-- 🌍 **Cross-platform**: macOS (Intel/M1/M2), Linux (x86_64/arm64), Windows
-- 🛠️ **PostgreSQL-aware**: Automatic PGDATA setup and initdb execution
-- 📦 **Low maintenance**: Simple Lua implementation
+- **Fast installations**: Pre-built binaries, no compilation required
+- **Precise version control**: Install specific PostgreSQL versions (e.g., 15.10.0)
+- **Secure**: SHA256 checksum verification for all downloads
+- **Cross-platform**: macOS (Intel/Apple Silicon), Linux (x86_64/arm64, glibc/musl), Windows
+- **PostgreSQL-aware**: Automatic PGDATA setup and initdb execution
+- **Low maintenance**: Simple Lua implementation
 
 ## Installation
 
@@ -96,20 +96,46 @@ mise install
 mise plugin link --force postgres-binary "$PWD"
 ```
 
-### Testing
+### Available Tasks
 
 ```bash
-# Run linters
-mise run lint
+mise run format       # Format Lua code with stylua
+mise run lint         # Run all linters (luacheck, stylua, actionlint)
+mise run test         # Quick test (link plugin, list versions)
+mise run test-install # Full test with database operations
+mise run test-docker  # Run Docker-based tests
+mise run ci           # Full CI pipeline (lint + test)
+mise run clean        # Clean up test installations
+```
 
-# Format code
-mise run format
+### Testing
 
-# Run tests
-mise run test
+See [TESTING.md](TESTING.md) for comprehensive testing instructions including:
 
-# Full CI pipeline
-mise run ci
+- Local testing on macOS/Linux
+- Docker testing (Debian glibc, Alpine musl)
+- CI verification
+
+Quick local test:
+
+```bash
+# Link and install
+mise plugin link --force postgres-binary "$PWD"
+mise install postgres-binary:postgres@15.15.0
+
+# Verify
+mise exec postgres-binary:postgres@15.15.0 -- postgres --version
+```
+
+Docker test:
+
+```bash
+# Run all Docker tests
+./test/run-docker-tests.sh
+
+# Or specific distribution
+./test/run-docker-tests.sh debian
+./test/run-docker-tests.sh alpine
 ```
 
 ### Project Structure
@@ -120,12 +146,18 @@ mise-postgres-binary/
 │   ├── backend_list_versions.lua  # Fetch versions from GitHub API
 │   ├── backend_install.lua        # Download, verify, extract, initdb
 │   └── backend_exec_env.lua       # Set environment variables
+├── test/
+│   ├── Dockerfile.debian          # Debian (glibc) test container
+│   ├── Dockerfile.alpine          # Alpine (musl) test container
+│   ├── docker-compose.yml         # Multi-container test orchestration
+│   └── run-docker-tests.sh        # Docker test runner
 ├── .github/workflows/ci.yml       # CI/CD pipeline
 ├── .luacheckrc                    # Lua linter configuration
 ├── hk.pkl                         # Pre-commit hooks
-├── mise.toml                      # Development tools
+├── mise.toml                      # Development tools and tasks
 ├── metadata.lua                   # Plugin metadata
 ├── stylua.toml                    # Lua formatter configuration
+├── TESTING.md                     # Testing documentation
 └── README.md
 ```
 
@@ -133,11 +165,12 @@ mise-postgres-binary/
 
 1. **Version Discovery**: Queries GitHub API for available PostgreSQL releases
 2. **Platform Detection**: Uses `RUNTIME.osType` and `RUNTIME.archType` to determine platform
-3. **Download**: Fetches platform-specific binary tarball from GitHub releases
-4. **Verification**: Downloads SHA256 checksum and verifies binary integrity
-5. **Extraction**: Extracts tarball to installation directory
-6. **Initialization**: Runs `initdb` to create PostgreSQL data directory
-7. **Environment Setup**: Configures PGDATA, PATH, and library paths
+3. **libc Detection**: On Linux, detects glibc vs musl to select correct binary
+4. **Download**: Fetches platform-specific binary tarball from GitHub releases
+5. **Verification**: Downloads SHA256 checksum and verifies binary integrity
+6. **Extraction**: Extracts tarball to installation directory
+7. **Initialization**: Runs `initdb` to create PostgreSQL data directory
+8. **Environment Setup**: Configures PGDATA, PATH, and library paths
 
 ## Security
 
@@ -177,6 +210,16 @@ This usually indicates a corrupted download. Try:
 
 If you see "PGDATA directory already exists", the database cluster is already initialized. This is normal and safe.
 
+### PostgreSQL Won't Start
+
+Check logs and port availability:
+
+```bash
+cat /tmp/postgres.log
+lsof -i :5432
+pg_ctl start -D "$PGDATA" -o "-p 5433" -l /tmp/postgres.log  # Use alternate port
+```
+
 ## Contributing
 
 Contributions are welcome! Please:
@@ -184,7 +227,8 @@ Contributions are welcome! Please:
 1. Fork the repository
 2. Create a feature branch
 3. Run `mise run lint` before committing
-4. Submit a pull request
+4. Run `mise run test-install` to verify changes
+5. Submit a pull request
 
 ## License
 

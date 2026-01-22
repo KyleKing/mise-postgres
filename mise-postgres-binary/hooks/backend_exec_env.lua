@@ -1,7 +1,7 @@
 --- Sets up PostgreSQL environment variables for the installed tool
 --- @param ctx table Context containing install_path, tool, and version
 --- @return table Table with env_vars array
-function BackendExecEnv(ctx)
+function PLUGIN:BackendExecEnv(ctx)
     local install_path = ctx.install_path
     local tool = ctx.tool
 

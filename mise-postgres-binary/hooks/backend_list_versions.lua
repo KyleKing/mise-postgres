@@ -1,7 +1,10 @@
+local http = require("http")
+local json = require("json")
+
 --- Lists available PostgreSQL versions from theseus-rs/postgresql-binaries GitHub releases
 --- @param ctx table Context containing tool information
 --- @return table Table with versions array
-function BackendListVersions(ctx)
+function PLUGIN:BackendListVersions(ctx)
     local tool = ctx.tool
 
     -- Only handle postgres/postgresql tools
@@ -11,13 +14,13 @@ function BackendListVersions(ctx)
 
     -- Fetch releases from GitHub API
     local api_url = "https://api.github.com/repos/theseus-rs/postgresql-binaries/releases"
-    local ok, response = pcall(http.get, api_url)
+    local resp, err = http.get({ url = api_url })
 
-    if not ok then
-        error("Failed to fetch versions from GitHub API: " .. tostring(response))
+    if err then
+        error("Failed to fetch versions from GitHub API: " .. tostring(err))
     end
 
-    local releases = json.decode(response)
+    local releases = json.decode(resp.body)
     local versions = {}
 
     for _, release in ipairs(releases) do

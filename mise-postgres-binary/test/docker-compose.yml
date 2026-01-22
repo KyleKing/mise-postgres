@@ -1,0 +1,71 @@
+# Docker Compose for testing mise-postgres-binary across platforms
+#
+# Usage:
+#   docker compose -f test/docker-compose.yml build
+#   docker compose -f test/docker-compose.yml up
+#
+# Or test a specific service:
+#   docker compose -f test/docker-compose.yml up debian-pg15
+#   docker compose -f test/docker-compose.yml up alpine-pg16
+
+services:
+  # Debian (glibc) tests
+  debian-pg15:
+    build:
+      context: ..
+      dockerfile: test/Dockerfile.debian
+      args:
+        POSTGRES_VERSION: "15.15.0"
+    platform: linux/amd64
+
+  debian-pg16:
+    build:
+      context: ..
+      dockerfile: test/Dockerfile.debian
+      args:
+        POSTGRES_VERSION: "16.11.0"
+    platform: linux/amd64
+
+  debian-pg17:
+    build:
+      context: ..
+      dockerfile: test/Dockerfile.debian
+      args:
+        POSTGRES_VERSION: "17.7.0"
+    platform: linux/amd64
+
+  # Alpine (musl) tests
+  alpine-pg15:
+    build:
+      context: ..
+      dockerfile: test/Dockerfile.alpine
+      args:
+        POSTGRES_VERSION: "15.15.0"
+    platform: linux/amd64
+
+  alpine-pg16:
+    build:
+      context: ..
+      dockerfile: test/Dockerfile.alpine
+      args:
+        POSTGRES_VERSION: "16.11.0"
+    platform: linux/amd64
+
+  # ARM64 tests (if running on ARM or with emulation)
+  debian-arm64-pg15:
+    build:
+      context: ..
+      dockerfile: test/Dockerfile.debian
+      args:
+        POSTGRES_VERSION: "15.15.0"
+    platform: linux/arm64
+    profiles: ["arm64"]
+
+  alpine-arm64-pg15:
+    build:
+      context: ..
+      dockerfile: test/Dockerfile.alpine
+      args:
+        POSTGRES_VERSION: "15.15.0"
+    platform: linux/arm64
+    profiles: ["arm64"]
